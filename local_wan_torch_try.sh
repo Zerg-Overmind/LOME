@@ -1,0 +1,21 @@
+accelerate launch \
+    examples/wanvideo/model_training/train.py \
+    --dataset_base_path yours/ego-dex/ \
+    --dataset_metadata_path yours/datasets/ego-dex/metadata_vace.csv \
+    --data_file_keys "video,vace_reference_image,prompt,pose" \
+    --height 480 \
+    --width 832 \
+    --num_frames 49 \
+    --num_epochs 20 \
+    --dataset_repeat 1 \
+    --model_id_with_origin_paths "Wan-AI/Wan2.1-VACE-14B:diffusion_pytorch_model*.safetensors,Wan-AI/Wan2.1-VACE-14B:models_t5_umt5-xxl-enc-bf16.pth,Wan-AI/Wan2.1-VACE-14B:Wan2.1_VAE.pth" \
+    --learning_rate 5e-6 \
+    --remove_prefix_in_ckpt "pipe.vace." \
+    --output_path "yours/models/train/Wan2.1-VACE-14B_full" \
+    --trainable_models "vace" \
+    --lora_base_model "vace" \
+    --lora_target_modules "q,k,v,o,ffn.0,ffn.2" \
+    --lora_rank 128 \
+    --extra_inputs "vace_reference_image,prompt,pose" \
+    --save_steps 80 \
+    --use_gradient_checkpointing_offload
