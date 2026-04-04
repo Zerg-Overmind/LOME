@@ -18,7 +18,7 @@
 <div align="center">
     <a href="https://zerg-overmind.github.io/LOME.github.io/"><strong>Project Page</strong></a> |
     <a href="https://arxiv.org/abs/2603.27449"><strong>Paper</strong></a> |
-    <a href="https://www.youtube.com/watch?v=zCBdu0Hvty4"><strong>Video</strong></a> 
+    <a href="https://youtu.be/_Uhkxx7ARoY"><strong>Video</strong></a> 
 </div>
 
 ## 1. Installation  
