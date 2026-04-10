@@ -500,22 +500,22 @@ class WanVideoPipeline(BasePipeline):
         # Inputs-multiple conditions
         inputs_posi_1 = {
             "prompt": prompt,
-            "cfg_vace_unconditioned": False,
+            "cfg_vace_uncondition": False,
             "tea_cache_l1_thresh": tea_cache_l1_thresh, "tea_cache_model_id": tea_cache_model_id, "num_inference_steps": num_inference_steps,
         }
         inputs_nega_1 = {
             "negative_prompt": negative_prompt,
-            "cfg_vace_unconditioned": False,
+            "cfg_vace_uncondition": False,
             "tea_cache_l1_thresh": tea_cache_l1_thresh, "tea_cache_model_id": tea_cache_model_id, "num_inference_steps": num_inference_steps,
         }
         inputs_posi_2 = {
             "prompt": prompt,
-            "cfg_vace_unconditioned": True,
+            "cfg_vace_uncondition": True,
             "tea_cache_l1_thresh": tea_cache_l1_thresh, "tea_cache_model_id": tea_cache_model_id, "num_inference_steps": num_inference_steps,
         }
         inputs_nega_2 = {
             "negative_prompt": negative_prompt,
-            "cfg_vace_unconditioned": True,
+            "cfg_vace_uncondition": True,
             "tea_cache_l1_thresh": tea_cache_l1_thresh, "tea_cache_model_id": tea_cache_model_id, "num_inference_steps": num_inference_steps,
         }
         
@@ -1228,6 +1228,8 @@ def model_fn_wan_video(
     fuse_vae_embedding_in_latents: bool = False,
     **kwargs,
 ):
+    cfg_vace_uncondition = kwargs.pop("cfg_vace_unconditioned", cfg_vace_uncondition)
+
     if sliding_window_size is not None and sliding_window_stride is not None:
         model_kwargs = dict(
             dit=dit,
@@ -1301,23 +1303,17 @@ def model_fn_wan_video(
 
     # cfg concat
     L = x.shape[2]//2
-    
+    if vace_video_latents is not None:
+        if dit.training:
+            dropout_rand = torch.rand(1, generator=torch.Generator(device='cpu').manual_seed(
+                int(timestep.item() * 1000)  # deterministic based on timestep
+            )).item()
+            if dropout_rand >= 0.1:
+                x[:, :, L:] = vace_video_latents
+        elif not cfg_vace_uncondition:
+            x[:, :, L:] = vace_video_latents
 
-    # training
-    dropout_rand = torch.rand(1, generator=torch.Generator(device='cpu').manual_seed(
-        int(timestep.item() * 1000)  # deterministic based on timestep
-    )).item()
-    if dropout_rand >= 0.1:
-        x[:,:,L:] = vace_video_latents #noise[:,:,L:]
-   
 
-    # inference
-    # if not cfg_vace_uncondition: # only happens in inference
-    #    x[:,:,L:] = vace_video_latents #noise[:,:,L:]
-    # else:
-    #    x[:,:,L:] = noise[:,:,L:]
-    
-    
     if x.shape[0] != context.shape[0]:
         x = torch.concat([x] * context.shape[0], dim=0)
     if timestep.shape[0] != context.shape[0]:
@@ -1518,4 +1514,3 @@ def model_fn_wans2v(
     # make compatible with wan video
     x = torch.cat([origin_ref_latents, x], dim=2)
     return x
-
